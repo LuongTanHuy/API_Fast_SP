@@ -35,7 +35,7 @@ public class ProductController {
         return ResponseEntity.ok().body(this.productInterface.productOfTheSameType("mobileApp",idCategory, page, size));
     }
 
-    @GetMapping("product/store/{idStore}/")
+    @GetMapping("product/store/{idStore}")
     public ResponseEntity<List<ProductDTO>> storeProduct(@PathVariable("idStore") String idStore,
                                           @RequestParam(defaultValue = "0") int page,
                                           @RequestParam(defaultValue = "20") int size){

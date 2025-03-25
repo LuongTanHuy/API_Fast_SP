@@ -15,6 +15,9 @@ public class StoreDTO {
     private String email;
     private String phone;
 
+    public StoreDTO() {
+    }
+
     public StoreDTO(Store store) {
         this.id = store.getId();
         this.name = store.getName();

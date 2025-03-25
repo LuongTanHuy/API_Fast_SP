@@ -23,6 +23,12 @@ public class AuthenticationService implements IAuthentication {
         if (accountModels != null) {
             if (this.passwordEncoder.matches(password, accountModels.getPassword())) {
                 if (accountModels.getPermission() == true) {
+                    if(accountModels.getRole().equals("store")){
+                        String accessToken = this.tokenService.generateToken(accountModels.getStoreModel().getId());
+                        String refreshToken = this.tokenService.generateRefreshToken(accountModels.getStoreModel().getId());
+
+                        return new AuthDTO(accessToken, refreshToken);
+                    }
                     String accessToken = this.tokenService.generateToken(accountModels.getId());
                     String refreshToken = this.tokenService.generateRefreshToken(accountModels.getId());
 
@@ -46,5 +52,12 @@ public class AuthenticationService implements IAuthentication {
         return null;
     }
 
+    @Override
+    public String refreshToken(String refreshToken) {
+        if (refreshToken != null) {
+            return this.tokenService.refreshToken(refreshToken);
+        }
+        return null;
+    }
 
 }

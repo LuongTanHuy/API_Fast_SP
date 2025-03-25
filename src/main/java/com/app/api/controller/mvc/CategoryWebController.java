@@ -16,8 +16,8 @@ public class CategoryWebController {
     private ICategoryService categoryInterface;
 
     @PostMapping("category/add")
-    public ResponseEntity<List<CategoryDTO>> add(@RequestParam("category") String category,
-                                                 @RequestParam("idStore") Integer idStore,
+    public ResponseEntity<List<CategoryDTO>> add(@RequestHeader("Authorization") String idStore,
+                                                 @RequestParam("category") String category,
                                                  @RequestParam("sale") Integer sale) {
 
         return ResponseEntity.status(200).body(this.categoryInterface.add(category, idStore, sale));

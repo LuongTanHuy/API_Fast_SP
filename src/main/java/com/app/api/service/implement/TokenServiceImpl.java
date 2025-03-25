@@ -48,7 +48,7 @@ public class TokenServiceImpl {
                     .getBody();
 
             if (claims.getExpiration().before(new Date())) {
-                return null;
+                return 0;
             }
 
             return Integer.valueOf(claims.getSubject());
@@ -57,14 +57,15 @@ public class TokenServiceImpl {
         }
     }
 
-    public boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String refreshToken) {
         try {
-            Claims claims = Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+            Claims claims = Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(refreshToken).getBody();
             return claims.getExpiration().before(new Date());
         } catch (Exception e) {
             return true;
         }
     }
+
 
     public String refreshToken(String refreshToken) {
         if (isTokenExpired(refreshToken)) {

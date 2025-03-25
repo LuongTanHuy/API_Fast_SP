@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v2/web/")
-public class OrderController {
+public class OrderWebController {
 
     @Autowired
     private IOrderService orderInterface;
