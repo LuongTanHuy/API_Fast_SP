@@ -24,4 +24,13 @@ public class AuthenticationWebController {
         }
     }
 
+    @PostMapping("refreshToken")
+    public ResponseEntity<?> refreshToken(@RequestParam("refreshToken") String refreshToken){
+        if(authenticationService.refreshToken(refreshToken).equals(null)){
+            return ResponseEntity.status(403).body("Invalid refresh token");
+        }else {
+            return ResponseEntity.status(200).body(authenticationService.refreshToken(refreshToken));
+        }
+    }
+
 }

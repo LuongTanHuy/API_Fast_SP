@@ -5,10 +5,7 @@ import com.app.api.dto.AccountDTO;
 import com.app.api.service.interfaces.IAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -18,6 +15,18 @@ public class AccountWebController {
 
     @Autowired
     private IAccountService accountInterface;
+
+    @GetMapping("account/information")
+    public ResponseEntity<AccountDTO> accountDetail(@RequestHeader("Authorization") String authorizationHeader){
+        try {
+            AccountDTO accountDTO = this.accountInterface.accountDetail(authorizationHeader);
+            return accountDTO != null
+                    ? ResponseEntity.status(200).body(accountDTO)
+                    : ResponseEntity.status(404).body(null);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.status(404).body(null);
+        }
+    }
 
     @GetMapping("list-account")
     public ResponseEntity<List<AccountDTO>> listAccount(@RequestParam(defaultValue = "0") int page,

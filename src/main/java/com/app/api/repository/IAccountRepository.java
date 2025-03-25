@@ -17,4 +17,7 @@ public interface IAccountRepository extends JpaRepository<Account,Integer> {
 
     @Query("SELECT a FROM Account a WHERE a.storeModel.status = 2 ORDER BY a.created_at DESC ")
     List<Account> getAllByStatusStore();
+
+    @Query("SELECT a FROM Account a WHERE a.storeModel.id =:idStore")
+    Account findByStoreId(@Param("idStore") Integer idStore);
 }

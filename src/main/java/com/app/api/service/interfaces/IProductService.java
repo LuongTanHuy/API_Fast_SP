@@ -14,6 +14,6 @@ public interface IProductService {
 
 
     public boolean add(String authorizationHeader, int idCategory, String name, double price, MultipartFile file);
-    public boolean update(String authorizationHeader, Integer idCategory, String name, double price, MultipartFile file);
+    public boolean update(String authorizationHeader,Integer idProduct, Integer idCategory, String name, double price, MultipartFile file);
     public boolean changeStatus(int id);
 }

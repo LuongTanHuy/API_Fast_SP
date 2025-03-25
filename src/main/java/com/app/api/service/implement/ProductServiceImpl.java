@@ -59,7 +59,6 @@ public class ProductServiceImpl implements IProductService {
     }
 
     //Mobile App
-
     public List<ProductDTO> productOfTheSameType(String type,Integer idCategory,Integer page, Integer size){
         try {
             Pageable pageable = PageRequest.of(page, size);
@@ -109,7 +108,7 @@ public class ProductServiceImpl implements IProductService {
             List<Product> listProduct = this.productRepository.findByCategoryModelStoreModelIdAndCategoryModelIdOrderByCategoryModelCategoryDesc(idStore,idCategory,pageable);
             return this.convertToDTO(listProduct,"");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return Collections.emptyList();
         }
     };
 
@@ -121,7 +120,7 @@ public class ProductServiceImpl implements IProductService {
             List<Product> listProduct = this.productRepository.findByNameContainingAndCategoryModelStoreModelIdOrderByCategoryModelCategoryDesc(search,idStore);
             return this.convertToDTO(listProduct,"");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return Collections.emptyList();
         }
     }
 
@@ -151,16 +150,16 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public boolean update(String authorizationHeader, Integer idCategory, String name, double price, MultipartFile file) {
+    public boolean update(String authorizationHeader,Integer idProduct, Integer idCategory, String name, double price, MultipartFile file) {
 
-        Integer idProduct = this.tokenService.validateTokenAndGetId(authorizationHeader);
+        Integer idStore = this.tokenService.validateTokenAndGetId(authorizationHeader);
 
         Optional<Product> getProductModel = this.productRepository.findById(idProduct);
 
         Category categoryModel = new Category();
         categoryModel.setId(idCategory);
 
-        if (getProductModel.isPresent()) {
+        if (getProductModel.isPresent() && getProductModel.get().getCategoryModel().getStoreModel().getId() == idStore) {
             Product updateProductModel = getProductModel.get();
             updateProductModel.setName(name);
             if (!file.isEmpty()) {

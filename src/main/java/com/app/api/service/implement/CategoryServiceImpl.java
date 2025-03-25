@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements ICategoryService {
     private final  ICategoryRepository categoryRepository;
+    private final TokenServiceImpl tokenService;
     private static final Integer SHOW = 0;
     private static final Integer HIDDEN = 1;
     @Override
@@ -52,18 +53,18 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
     @Override
-    public List<CategoryDTO> add(String category, Integer idStore, Integer sale) {
+    public List<CategoryDTO> add(String category, String idStore, Integer sale) {
 
         Category categoryModel = new Category();
         categoryModel.setCategory(category);
         categoryModel.setSale(sale);
         Store store = new Store();
-        store.setId(idStore);
+        store.setId(this.tokenService.validateTokenAndGetId(idStore));
         categoryModel.setStoreModel(store);
 
         this.categoryRepository.save(categoryModel);
 
-        return this.listCategory(idStore);
+        return this.listCategory(this.tokenService.validateTokenAndGetId(idStore));
     }
 
     @Override
@@ -79,6 +80,5 @@ public class CategoryServiceImpl implements ICategoryService {
         }
         return null;
     }
-
 
 }

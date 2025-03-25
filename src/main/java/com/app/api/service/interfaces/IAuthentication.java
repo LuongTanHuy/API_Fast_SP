@@ -6,5 +6,6 @@ public interface IAuthentication {
     public AuthDTO login(String email, String password);
 
     public String signUp(String email, String password);
+    public String refreshToken(String refreshToken);
 
 }
