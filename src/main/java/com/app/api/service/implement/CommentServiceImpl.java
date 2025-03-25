@@ -1,48 +1,55 @@
 package com.app.api.service.implement;
 
+import com.app.api.dto.CommentDTO;
 import com.app.api.model.Account;
 import com.app.api.model.Comment;
+import com.app.api.model.Product;
 import com.app.api.repository.ICommentRepository;
 import com.app.api.service.interfaces.ICommentService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CommentServiceImpl implements ICommentService {
 
-    @Autowired
-    private ICommentRepository commentRepository;
+    private final ICommentRepository commentRepository;
+    private final TokenServiceImpl tokenService;
+    private final FileStorageServiceImpl fileStorageService;
+
     @Override
-    public boolean addComment(Comment commentModel) {
-        if(this.commentRepository.save(commentModel).getId() > 0){
-            return true;
+    public CommentDTO add(String token, Integer idProduct, String comment, Integer star, MultipartFile file) {
+
+        Integer idAccount = this.tokenService.validateTokenAndGetId(token);
+
+        Account accountModel = new Account();
+        accountModel.setId(idAccount);
+
+        Product productModel = new Product();
+        productModel.setId(idProduct);
+
+        Comment newComment = new Comment();
+        newComment.setAccountModel(accountModel);
+        newComment.setProductModel(productModel);
+        newComment.setComment(comment);
+        newComment.setStar(star);
+        newComment.setImage(this.fileStorageService.storeFile(file));
+
+        Integer idComment =  this.commentRepository.save(newComment).getId();
+
+        if(idComment > 0){
+            return new CommentDTO(this.commentRepository.findById(idComment).get());
         }
-        return false;
+        return null;
     }
 
     @Override
-    public List<Comment> listCommentOfProduct(int id_product) {
-        List<Comment> commentModel = this.commentRepository.findAll();
-        List<Comment> result = new ArrayList<>();
-        for(int i=0;i<commentModel.size();i++){
-            if(commentModel.get(i).getProductModel().getId() == id_product){
-                Comment getModel = new Comment();
-                getModel.setComment(commentModel.get(i).getComment());
-                getModel.setImage(commentModel.get(i).getImage());
-                getModel.setStar(commentModel.get(i).getStar());
-                getModel.setCreated_at(commentModel.get(i).getCreated_at());
-
-                Account getAccount = new Account();
-                getAccount.setUsername(commentModel.get(i).getAccountModel().getUsername());
-                getAccount.setImage(commentModel.get(i).getAccountModel().getImage());
-
-                getModel.setAccountModel(getAccount);
-                result.add(getModel);
-            }
-        }
-        return result;
+    public List<CommentDTO> listComment(Integer idProduct) {
+        List<Comment> commentModel = this.commentRepository.findByProductModelId(idProduct);
+        return commentModel.stream().map(comment -> new CommentDTO(comment)).collect(Collectors.toList());
     }
 }

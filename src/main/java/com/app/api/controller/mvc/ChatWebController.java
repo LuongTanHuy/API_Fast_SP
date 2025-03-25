@@ -24,11 +24,11 @@ public class ChatWebController {
 
     @GetMapping("chat")
     public String PageChat(Model model, @CookieValue("FastFood") String token) {
-        int idAccount = Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token));
-        int idStore = this.accountInterface.getAccountDetailForWeb(idAccount).getStoreModel().getId();
+//        int idAccount = Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token));
+//        int idStore = this.accountInterface.getAccountDetailForWeb(idAccount).getStoreModel().getId();
 
-        model.addAttribute("listCustomer",this.chatInterface.listCustomer(idStore));
-        model.addAttribute("account", this.accountInterface.accountProfile(idAccount,"Web"));
+//        model.addAttribute("listCustomer",this.chatInterface.listCustomer(idStore));
+//        model.addAttribute("account", this.accountInterface.accountProfile(idAccount,"Web"));
         model.addAttribute("title", "Trò Chuyện");
         model.addAttribute("file_html", "/components/chatBody");
         model.addAttribute("component", "chatBody");

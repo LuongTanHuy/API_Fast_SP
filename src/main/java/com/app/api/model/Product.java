@@ -35,17 +35,7 @@ public class Product {
     @OneToMany(mappedBy = "productModel")
     private Set<Comment> commentModels;
 
-    public int totalProductSold;
-    public double totalRevenue;
-
     public Product() {
-    }
-
-    public void setTotalProductSold(int totalProductSold) {
-        this.totalProductSold = totalProductSold;
-    }
-    public void setTotalRevenue(double totalRevenue) {
-        this.totalRevenue = totalRevenue;
     }
 
     public Integer getStatus() {

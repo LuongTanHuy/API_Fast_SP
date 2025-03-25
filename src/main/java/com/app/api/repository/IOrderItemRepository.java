@@ -3,6 +3,7 @@ package com.app.api.repository;
 import com.app.api.model.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,9 +28,14 @@ public interface IOrderItemRepository extends JpaRepository<OrderItem,Integer> {
     @Query("SELECT oi FROM OrderItem oi  WHERE  oi.orderModel.id = ?1")
     Optional<OrderItem> findByIdOrder(int id);
 
-    @Query("SELECT SUM (oi.quantity) FROM OrderItem oi  WHERE oi.productModel.id = ?1 AND oi.orderModel.status = 3 ")
-    Integer totalProductSold(int idProduct);
+    @Query("SELECT oi.productModel.id, SUM(oi.quantity) FROM OrderItem oi " +
+            "WHERE oi.productModel.id IN (:idProduct) AND oi.orderModel.status = 3 " +
+            "GROUP BY oi.productModel.id")
+    List<Object[]> totalProductSold(@Param("idProduct") List<Integer> idProduct);
 
-    @Query("SELECT SUM (oi.price) FROM OrderItem oi  WHERE oi.productModel.id = ?1 AND oi.orderModel.status = 3 ")
-    Double totalRevenue(int idProduct);
+    @Query("SELECT oi.productModel.id, SUM(oi.price) FROM OrderItem oi " +
+            "WHERE oi.productModel.id IN (:idProduct) AND oi.orderModel.status = 3 " +
+            "GROUP BY oi.productModel.id")
+    List<Object[]> totalRevenue(@Param("idProduct") List<Integer> idProduct);
+
 }

@@ -3,7 +3,6 @@ package com.app.api.model;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -50,23 +49,7 @@ public class Store {
     @OneToMany(mappedBy = "storeModel")
     private Set<Chat> chatModel;
 
-    public List<String> listCategory;
-    public int totalOrdersSold;
-    public double revenue;
-
     public Store() {
-    }
-
-    public void setTotalOrdersSold(int totalOrdersSold) {
-        this.totalOrdersSold = totalOrdersSold;
-    }
-
-    public void setRevenue(double revenue) {
-        this.revenue = revenue;
-    }
-
-    public  void setListCategory(List<String> listCategory) {
-        this.listCategory = listCategory;
     }
 
     public String getImage() {

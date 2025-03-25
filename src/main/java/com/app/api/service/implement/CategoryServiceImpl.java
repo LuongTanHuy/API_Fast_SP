@@ -1,74 +1,83 @@
 package com.app.api.service.implement;
 
+import com.app.api.dto.CategoryDTO;
 import com.app.api.model.Category;
 import com.app.api.model.Store;
 import com.app.api.repository.ICategoryRepository;
 import com.app.api.service.interfaces.ICategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryServiceImpl implements ICategoryService {
-    @Autowired
-    private ICategoryRepository categoryRepository;
-
+    private final  ICategoryRepository categoryRepository;
+    private static final Integer SHOW = 0;
+    private static final Integer HIDDEN = 1;
     @Override
-    public List<Category> getAllByIdStore(int id_store) {
-        List<Category> listCategory = this.categoryRepository.getAllByIdStore(id_store);
-        List<Category> result_Category = new ArrayList<>();
-        for(int i =0 ;i< listCategory.size();i++) {
-            Store newStoreModel = new Store();
-            newStoreModel.setId(listCategory.get(i).getStoreModel().getId());
-            Category newCategoryModel = new Category();
-            newCategoryModel.setId(listCategory.get(i).getId());
-            newCategoryModel.setCategory(listCategory.get(i).getCategory());
-            newCategoryModel.setStoreModel(newStoreModel);
-            newCategoryModel.setStatus(listCategory.get(i).getStatus());
-            newCategoryModel.setSale(listCategory.get(i).getSale());
-            result_Category.add(newCategoryModel);
+    @Cacheable(value = "categories", key = "#idStore")
+    public List<CategoryDTO> listCategory(Integer idStore) {
+        try {
+            List<Category> listCategory = this.categoryRepository.getAllByIdStore(idStore);
+            return listCategory.stream().map(CategoryDTO::new).collect(Collectors.toList());
+
+        } catch (Exception e) {
+            System.out.println("CategoryServiceImpl - Error get listCategory: {}"+ e.getMessage());
+            return Collections.emptyList();
         }
-        return result_Category;
     }
 
     @Override
-    public boolean add(Category categoryModel) {
-        this.categoryRepository.save(categoryModel);
-        return true;
-    }
-
-    @Override
-    public boolean changeStatus(int id_category) {
-        Optional<Category> getCategoryModel = this.categoryRepository.findById(id_category);
+    public List<CategoryDTO> changeStatus(Integer idCategory) {
+        Optional<Category> getCategoryModel = this.categoryRepository.findById(idCategory);
         if(getCategoryModel.isPresent()){
-            if(getCategoryModel.get().getStatus() == 0){
+            if(getCategoryModel.get().getStatus() == SHOW){
                Category update = getCategoryModel.get();
-               update.setStatus(1);
-                this.categoryRepository.save(update);
+               update.setStatus(HIDDEN);
+               this.categoryRepository.save(update);
             }else{
                 Category update = getCategoryModel.get();
-                update.setStatus(0);
+                update.setStatus(SHOW);
                 this.categoryRepository.save(update);
             }
-            return true;
+            return this.listCategory(getCategoryModel.get().getStoreModel().getId());
         }
-        return false;
+        return null;
     }
 
     @Override
-    public boolean update(Category categoryModel) {
-        Optional<Category> getCategory = this.categoryRepository.findById(categoryModel.getId());
+    public List<CategoryDTO> add(String category, Integer idStore, Integer sale) {
+
+        Category categoryModel = new Category();
+        categoryModel.setCategory(category);
+        categoryModel.setSale(sale);
+        Store store = new Store();
+        store.setId(idStore);
+        categoryModel.setStoreModel(store);
+
+        this.categoryRepository.save(categoryModel);
+
+        return this.listCategory(idStore);
+    }
+
+    @Override
+    public List<CategoryDTO> update(Integer idCategory, String category, Integer sale) {
+
+        Optional<Category> getCategory = this.categoryRepository.findById(idCategory);
         if(getCategory.isPresent()){
             Category update = getCategory.get();
-            update.setCategory(categoryModel.getCategory());
-            update.setSale(categoryModel.getSale());
+            update.setCategory(category);
+            update.setSale(sale);
             this.categoryRepository.save(update);
-            return true;
+            return this.listCategory(update.getStoreModel().getId());
         }
-        return false;
+        return null;
     }
 
 

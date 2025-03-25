@@ -1,21 +1,19 @@
 package com.app.api.service.interfaces;
 
-import com.app.api.model.Category;
-import com.app.api.model.Product;
+import com.app.api.dto.ProductDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface IProductService {
-    public List<Product> listProducts();
-    public List<Product> productOfTheSameType(int id_category);
-    public List<Product> productOfShop(int id_store);
-    public List<Category> categoryOfShop(int id_store);
-    public List<Product> searchProductOfShop(int id_store, String search);
-    public List<Product> searchProductOfTheSameType(int id_store, int id_category);
+    public List<ProductDTO> productList(String type,Integer page, Integer size);
+    public List<ProductDTO> storeProduct(String type, String authorizationHeader, Integer page, Integer size);
+    public List<ProductDTO> productOfTheSameType(String type,Integer idCategory, Integer page, Integer size);
+    public List<ProductDTO>filterProduct(String authorizationHeader, Integer idCategory, Integer page, Integer size);
+    public List<ProductDTO> searchProductInStore(String authorizationHeader, String search);
 
-    public Product getProductDetail(int id);
 
-    public boolean changeStatusProduct(int id);
-    public boolean addProduct(Product productModel);
-    public boolean updateProduct(Product productModel);
+    public boolean add(String authorizationHeader, int idCategory, String name, double price, MultipartFile file);
+    public boolean update(String authorizationHeader, Integer idCategory, String name, double price, MultipartFile file);
+    public boolean changeStatus(int id);
 }

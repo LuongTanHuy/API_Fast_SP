@@ -11,7 +11,6 @@ import java.nio.file.*;
 
 @Service
 public class FileStorageServiceImpl {
-
     private final Path fileStorageLocation;
 
     @Autowired

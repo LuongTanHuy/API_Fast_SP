@@ -21,8 +21,8 @@ public class BotChatWebController {
 
     @GetMapping("trainBot")
     public String PageTrainAI(Model model, @CookieValue("FastFood") String token) {
-        int idAccount = Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token));
-        model.addAttribute("account", this.accountInterface.accountProfile(idAccount,"Web"));
+//        int idAccount = Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token));
+//        model.addAttribute("account", this.accountInterface.accountProfile(idAccount,"Web"));
         model.addAttribute("title", "Bot AI");
         model.addAttribute("file_html", "/components/BotChatBody");
         model.addAttribute("component", "BotChatBody");

@@ -12,7 +12,7 @@ public class Account {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @OneToMany(mappedBy = "accountModel")
     private Set<Order> orderModels;
@@ -23,21 +23,12 @@ public class Account {
     @OneToMany(mappedBy = "accountModel")
     private Set<Chat> chatModel;
 
-
-    public Store getStoreModel() {
-        return storeModel;
-    }
-
-    public void setStoreModel(Store storeModel) {
-        this.storeModel = storeModel;
-    }
-
     @ManyToOne
     @JoinColumn(name = "id_store")
     private Store storeModel;
 
-    @Column(name="status")
-    private int status;
+    @Column(name="permission")
+    private Boolean permission;
     @Column(name="oauth_provider")
     private String oauth_provider;
     @Column(name="oauth_uid")
@@ -63,11 +54,8 @@ public class Account {
     @Column(name="otp")
     private String otp;
 
-    @Column(name="permission")
-    private String permission;
-
-    private int totalOrderDelivered;
-    private int totalOrderBought;
+    @Column(name="role")
+    private String role;
     public Account() {
 
     }
@@ -83,10 +71,10 @@ public class Account {
     }
 
 
-    public Account(int id, String image, int status, String oauth_provider, String oauth_uid, String username, String email, String password, String phone, String address, Timestamp created_at, Timestamp updated_at, String otp, String permission) {
+    public Account(int id, String image, Boolean permission, String oauth_provider, String oauth_uid, String username, String email, String password, String phone, String address, Timestamp created_at, Timestamp updated_at, String otp, String role) {
         this.id = id;
         this.image = image;
-        this.status = status;
+        this.permission = permission;
         this.oauth_provider = oauth_provider;
         this.oauth_uid = oauth_uid;
         this.username = username;
@@ -97,15 +85,15 @@ public class Account {
         this.created_at = created_at;
         this.updated_at = updated_at;
         this.otp = otp;
-        this.permission = permission;
+        this.role = role;
     }
 
-    public void setTotalOrderBought(int totalOrderBought) {
-        this.totalOrderBought = totalOrderBought;
+    public Store getStoreModel() {
+        return storeModel;
     }
 
-    public void setTotalOrderDelivered(int totalOrderDelivered) {
-        this.totalOrderDelivered = totalOrderDelivered;
+    public void setStoreModel(Store storeModel) {
+        this.storeModel = storeModel;
     }
 
     public int getId() {
@@ -180,20 +168,20 @@ public class Account {
         this.otp = otp;
     }
 
-    public String getPermission() {
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public Boolean getPermission() {
         return permission;
     }
 
-    public void setPermission(String permission) {
+    public void setPermission(Boolean permission) {
         this.permission = permission;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
     }
 
     public Set<Order> getOrderModels() {
@@ -244,11 +232,4 @@ public class Account {
         this.updated_at = updated_at;
     }
 
-    public int getTotalOrderDelivered() {
-        return totalOrderDelivered;
-    }
-
-    public int getTotalOrderBought() {
-        return totalOrderBought;
-    }
 }

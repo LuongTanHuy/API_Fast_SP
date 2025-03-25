@@ -27,13 +27,13 @@ public class DashBoardWebController {
     @GetMapping("dashboard")
     public String PageOderItemForStore(Model model, @CookieValue("FastFood") String token){
         try {
-            int idAccount = Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token));
-            int idStore = this.accountInterface.getAccountDetailForWeb(Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token))).getStoreModel().getId();
+//            int idAccount = Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token));
+//            int idStore = this.accountInterface.getAccountDetailForWeb(Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token))).getStoreModel().getId();
 
-            model.addAttribute("account", this.accountInterface.accountProfile(idAccount, "Web"));
+//            model.addAttribute("account", this.accountInterface.accountProfile(idAccount, "Web"));
             model.addAttribute("title", "Thống Kê");
-            model.addAttribute("quantityOrder", this.orderItemInterface.getQuantityOrder(idStore));
-            model.addAttribute("priceOrder", this.orderItemInterface.getPriceOrder(idStore, 2024));
+//            model.addAttribute("quantityOrder", this.orderItemInterface.getQuantityOrder(idStore));
+//            model.addAttribute("priceOrder", this.orderItemInterface.getPriceOrder(idStore, 2024));
             List<Integer> years = IntStream.rangeClosed(2024, 2024 + 99).boxed().collect(Collectors.toList());
             model.addAttribute("years", years);
             model.addAttribute("file_html", "/components/dashBoardBody");
@@ -46,10 +46,10 @@ public class DashBoardWebController {
 
     @GetMapping("dashboard2")
     public String PageOderItemForStore2(Model model, @CookieValue("FastFood") String token, @RequestParam("year") int year){
-        model.addAttribute("account", this.accountInterface.getAccountDetailForWeb(Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token))));
+//        model.addAttribute("account", this.accountInterface.getAccountDetailForWeb(Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token))));
         model.addAttribute("title", "Thống Kê");
-        model.addAttribute("quantityOrder",this.orderItemInterface.getQuantityOrder(this.accountInterface.getAccountDetailForWeb(Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token))).getStoreModel().getId()));
-        model.addAttribute("priceOrder",this.orderItemInterface.getPriceOrder(this.accountInterface.getAccountDetailForWeb(Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token))).getStoreModel().getId(),year));
+//        model.addAttribute("quantityOrder",this.orderItemInterface.getQuantityOrder(this.accountInterface.getAccountDetailForWeb(Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token))).getStoreModel().getId()));
+//        model.addAttribute("priceOrder",this.orderItemInterface.getPriceOrder(this.accountInterface.getAccountDetailForWeb(Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token))).getStoreModel().getId(),year));
         List<Integer> years = IntStream.rangeClosed(2024, 2024 + 99).boxed().collect(Collectors.toList());
         model.addAttribute("years", years);
         model.addAttribute("file_html", "/components/dashBoardBody");

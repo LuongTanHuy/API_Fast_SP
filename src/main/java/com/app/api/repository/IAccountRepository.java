@@ -11,7 +11,7 @@ public interface IAccountRepository extends JpaRepository<Account,Integer> {
     @Query("SELECT a FROM Account a WHERE a.username LIKE %:keyword% OR a.email LIKE %:keyword% OR a.phone LIKE %:keyword%")
     List<Account> searchAccounts(@Param("keyword") String keyword);
     @Query("SELECT a FROM Account a WHERE  a.email =:keyword ")
-    List<Account> findByEmail(@Param("keyword") String keyword);
+    Account findByEmail(@Param("keyword") String keyword);
     @Query("SELECT a FROM Account a ORDER BY a.created_at DESC ")
     List<Account> listAccountByTime();
 

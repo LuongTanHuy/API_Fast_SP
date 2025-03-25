@@ -14,30 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("")
 public class ImageController {
-    @GetMapping("/FastFood/{filename:.+}")
-    public ResponseEntity<Resource> getImage(@PathVariable("filename") String filename) {
-        try {
-
-            Resource resource = new ClassPathResource("uploads/" + filename);
-
-            if (!resource.exists()) {return  ResponseEntity.notFound().build();}
-
-            HttpHeaders headers = new HttpHeaders();
-            if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")) {
-                headers.setContentType(MediaType.IMAGE_JPEG);
-            }
-            else if (filename.toLowerCase().endsWith(".png")) {
-                headers.setContentType(MediaType.IMAGE_PNG);
-            }
-            else {
-                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            }
-
-            return new ResponseEntity<>(resource, headers, HttpStatus.OK);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
 
     @GetMapping("/image/{filename:.+}")
     public ResponseEntity<Resource> getImageForApp(@PathVariable("filename") String filename) {

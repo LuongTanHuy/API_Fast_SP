@@ -1,89 +1,34 @@
 package com.app.api.controller.mvc;
 
 
-import com.app.api.service.implement.TokenServiceImpl;
+import com.app.api.dto.AccountDTO;
 import com.app.api.service.interfaces.IAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller("webServerAccountController")
-@RequestMapping("/FastFood/")
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v2/web/")
 public class AccountWebController {
 
     @Autowired
     private IAccountService accountInterface;
-    @Autowired
-    private TokenServiceImpl tokenService;
 
-
-    @GetMapping("account")
-    public String PageAccount(Model model,
-                              @CookieValue(value = "FastFood", required = false) String token,
-                              @RequestParam(defaultValue = "0") int page) {
-        // Kiểm tra token có hợp lệ không
-        if (token == null || token.isEmpty()) {
-            return "redirect:/FastFood/login";
-        }
-
-        int idAccount;
-        try {
-            idAccount = Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token));
-        } catch (Exception e) {
-            return "redirect:/login"; // Chuyển hướng nếu token không hợp lệ
-        }
-
-        int size = 2;
-        int totalAccounts = this.accountInterface.totalAccount();
-        int totalPages = (int) Math.ceil((double) totalAccounts / size); // Tính số trang chính xác
-
-        // Kiểm tra page có hợp lệ không
-        if (page < 0 || page >= totalPages) {
-            page = 0; // Đặt về trang đầu nếu page không hợp lệ
-        }
-
-        Pageable pageable = PageRequest.of(page, size);
-
-        // Thêm các thuộc tính vào model
-        model.addAttribute("account", this.accountInterface.accountProfile(idAccount, "Web"));
-        model.addAttribute("title", "Tài Khoản");
-        model.addAttribute("totalPages", totalPages);
-        model.addAttribute("page", page);
-        model.addAttribute("size", size);
-        model.addAttribute("listAccount", this.accountInterface.pageAccounts(pageable));
-        model.addAttribute("file_html", "/components/accountBody");
-        model.addAttribute("component", "accountBody");
-
-        return "pages/index";
+    @GetMapping("list-account")
+    public ResponseEntity<List<AccountDTO>> listAccount(@RequestParam(defaultValue = "0") int page,
+                                                        @RequestParam(defaultValue = "20") int size)
+    {
+        return ResponseEntity.status(200).body(this.accountInterface.listAccount(page, size));
     }
 
-    @GetMapping("lockOrUnlockAccount/{id}")
-    public ResponseEntity<?> lockOrUnlockAccount(@PathVariable("id") int id){
-        if(this.accountInterface.lockAccount(id)){
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("Location", "/FastFood/account");
-            return ResponseEntity.status(302).headers(headers).build();
-        }
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Location", "/FastFood/account");
-        return ResponseEntity.status(302).headers(headers).build();
-    }
-
-    @GetMapping("searchAccount")
-    public String searchAccount(Model model, @CookieValue("FastFood") String token,@RequestParam("search") String search){
-        int idAccount = Integer.parseInt(this.tokenService.validateTokenAndGetAccountId(token));
-
-
-        model.addAttribute("account", this.accountInterface.accountProfile(idAccount,"Web"));
-        model.addAttribute("title", "Tài Khoản");
-        model.addAttribute("listAccount", this.accountInterface.searchAccounts(search));
-        model.addAttribute("file_html", "/components/accountBody");
-        model.addAttribute("component", "accountBody");
-        return "pages/index";
+    @GetMapping("account/search")
+    public ResponseEntity<List<AccountDTO>> search(@RequestParam("search") String search)
+    {
+        return ResponseEntity.status(200).body(this.accountInterface.search(search));
     }
 }

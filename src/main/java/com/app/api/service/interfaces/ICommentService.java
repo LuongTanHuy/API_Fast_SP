@@ -1,10 +1,11 @@
 package com.app.api.service.interfaces;
 
-import com.app.api.model.Comment;
+import com.app.api.dto.CommentDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface ICommentService {
-    public boolean addComment(Comment commentModel);
-    public List<Comment> listCommentOfProduct(int id_product);
+    public CommentDTO add(String token, Integer idProduct, String comment, Integer star, MultipartFile file);
+    public List<CommentDTO> listComment(Integer idProduct);
 }

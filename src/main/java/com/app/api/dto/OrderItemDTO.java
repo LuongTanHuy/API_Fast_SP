@@ -1,18 +1,20 @@
 package com.app.api.dto;
 
 import com.app.api.model.OrderItem;
+import lombok.Data;
 
-public class OderItemDTO {
+@Data
+public class OrderItemDTO {
 
     private ProductDTO productDTO;
-    private Order categoryDTO;
+    private OrderDTO orderDTO;
     private Double price;
     private Integer quantity;
 
-    public OderItemDTO(OrderItem orderItem) {
+    public OrderItemDTO(OrderItem orderItem) {
         this.productDTO = new ProductDTO(orderItem.getProductModel());
-        this.categoryDTO = categoryDTO;
-        this.price = price;
-        this.quantity = quantity;
+        this.orderDTO = new OrderDTO(orderItem.getOrderModel());
+        this.price = orderItem.getPrice();
+        this.quantity = orderItem.getQuantity();
     }
 }

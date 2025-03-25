@@ -17,6 +17,11 @@ public class Banner {
     public Banner() {
     }
 
+    public Banner(String image, String text) {
+        this.image = image;
+        this.text = text;
+    }
+
     public String getImage() {
         return image;
     }

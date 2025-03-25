@@ -1,62 +1,80 @@
 package com.app.api.service.implement;
 
-import com.app.api.model.*;
+import com.app.api.dto.OrderItemDTO;
+import com.app.api.model.Order;
+import com.app.api.model.OrderItem;
+import com.app.api.model.Product;
 import com.app.api.repository.IOrderItemRepository;
 import com.app.api.repository.IOrderRepository;
 import com.app.api.repository.IProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.app.api.service.interfaces.IOrderItemService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
-public class OrderItemServiceImpl implements com.app.api.service.interfaces.IOrderItemService {
+@RequiredArgsConstructor
+public class OrderItemServiceImpl implements IOrderItemService {
 
     private final IOrderItemRepository orderItemRepository;
     private final IOrderRepository orderRepository;
     private final IProductRepository productRepository;
-
-    @Autowired
-    public OrderItemServiceImpl(IOrderItemRepository orderItemRepository,
-                                IOrderRepository orderRepository,
-                                IProductRepository productRepository) {
-        this.orderItemRepository = orderItemRepository;
-        this.orderRepository = orderRepository;
-        this.productRepository = productRepository;
-    }
+    private final TokenServiceImpl tokenService;
 
     @Override
-    public int add(int id_order, int id_product, int quantity) {
-        // Kiểm tra xem Order và Product có tồn tại không
-        Optional<Order> optionalOrderModel = this.orderRepository.findById(id_order);
-        Optional<Product> optionalProductModel = this.productRepository.findById(id_product);
+    public Integer add(Integer idOrder, Integer idProduct,Integer quantity) {
+        Optional<Order> optionalOrderModel = this.orderRepository.findById(idOrder);
+        Optional<Product> optionalProductModel = this.productRepository.findById(idProduct);
 
         if (!optionalOrderModel.isPresent()) {
-            throw new IllegalArgumentException("Order with id " + id_order + " does not exist.");
+            throw new IllegalArgumentException("Order with id " + idOrder + " does not exist.");
         }
         if (!optionalProductModel.isPresent()) {
-            throw new IllegalArgumentException("Product with id " + id_product + " does not exist.");
+            throw new IllegalArgumentException("Product with id " + idProduct + " does not exist.");
         }
 
-        // Lấy các đối tượng đã tồn tại từ cơ sở dữ liệu
         Order orderModel = optionalOrderModel.get();
         Product productModel = optionalProductModel.get();
 
-        // Khởi tạo OrderItem và thiết lập các giá trị
         OrderItem orderItemModel = new OrderItem();
         orderItemModel.setOrderModel(orderModel);
         orderItemModel.setProductModel(productModel);
         orderItemModel.setQuantity(quantity);
 
-        // Lưu OrderItem vào cơ sở dữ liệu và trả về ID
+
         return this.orderItemRepository.save(orderItemModel).getId();
     }
 
     @Override
-    public boolean updatePriceForOrderItem(List<Integer> id_order) {
+    public List<OrderItemDTO> listOrderItem(String token, Integer status){
+        Integer idAccount = this.tokenService.validateTokenAndGetId(token);
+        List<OrderItem> listItem = this.orderItemRepository.listOrderItem(idAccount,status);
+        return this.convertToDTO(listItem);
+    }
+
+    @Override
+    public List<OrderItemDTO> listOderToShipperChose(Integer statusOrderItem) {
+        List<OrderItem> listItem = this.orderItemRepository.listOrderForShipper(statusOrderItem);
+        return this.convertToDTO(listItem);
+    }
+
+    @Override
+    public List<OrderItemDTO> listOderItemOfStore(String idStore, Integer status) {
+        return this.convertToDTO(this.orderItemRepository.listOderItemOfStore(this.tokenService.validateTokenAndGetId(idStore),status));
+    }
+
+    @Override
+    public List<OrderItemDTO> listOrderOfShipper(Integer status, String token) {
+        Integer idShipper = this.tokenService.validateTokenAndGetId(token);
+        List<OrderItem> listItem = this.orderItemRepository.listOrderOfShipper(status,idShipper);
+        return this.convertToDTO(listItem);
+    }
+    @Override
+    public boolean updatePrice(List<Integer> id_order) {
         for(int i= 0 ;i < id_order.size();i++){
             Optional<OrderItem> orderItemModel = this.orderItemRepository.findByIdOrder(id_order.get(i));
             if (orderItemModel.isPresent()) {
@@ -70,90 +88,24 @@ public class OrderItemServiceImpl implements com.app.api.service.interfaces.IOrd
     }
 
     @Override
-    public List<OrderItem> listOrderItem(int id_account, int status) {
-        List<OrderItem> listItem = this.orderItemRepository.listOrderItem(id_account,status);
-        return this.informationOrderItem(listItem);
-    }
-
-    @Override
-    public List<OrderItem> listOrderForShipper(int statusOrderItem) {
-        List<OrderItem> listItem = this.orderItemRepository.listOrderForShipper(statusOrderItem);
-        return this.informationOrderItem(listItem);
-    }
-
-    @Override
-    public List<OrderItem> listOderItemOfStore(int id_store, int status) {
-        return this.orderItemRepository.listOderItemOfStore(id_store,status);
-    }
-
-    @Override
-    public List<OrderItem> listOrderOfShipper(int status, int idShipper) {
-        List<OrderItem> listItem = this.orderItemRepository.listOrderOfShipper(status,idShipper);
-        return this.informationOrderItem(listItem);
-    }
-
-    private List<OrderItem> informationOrderItem(List<OrderItem> listItem){
-        List<OrderItem> listItemResult = new ArrayList<>();
-
-        for(int i= 0;i<listItem.size();i++){
-            OrderItem orderItemModel =new OrderItem();
-
-            // Category
-            Category categoryModel = new Category();
-            categoryModel.setId(listItem.get(i).getProductModel().getCategoryModel().getId());
-            categoryModel.setCategory(listItem.get(i).getProductModel().getCategoryModel().getCategory());
-            categoryModel.setSale(listItem.get(i).getProductModel().getCategoryModel().getSale());
-
-            // Product
-            Product productModel = new Product();
-            productModel.setId(listItem.get(i).getProductModel().getId());
-            productModel.setImage(listItem.get(i).getProductModel().getImage());
-            productModel.setName(listItem.get(i).getProductModel().getName());
-            productModel.setPrice(listItem.get(i).getProductModel().getPrice());
-            productModel.setCategoryModel(categoryModel);
-
-            // Store
-            Store storeModel = new Store();
-            storeModel.setPhone(listItem.get(i).getOrderModel().getStoreModel().getPhone());
-            storeModel.setAddress(listItem.get(i).getOrderModel().getStoreModel().getAddress());
-            storeModel.setName(listItem.get(i).getOrderModel().getStoreModel().getName());
-
-            //AccountModel
-            Account accountModel = new Account();
-            accountModel.setUsername(listItem.get(i).getOrderModel().getAccountModel().getUsername());
-            accountModel.setAddress(listItem.get(i).getOrderModel().getAccountModel().getAddress());
-            accountModel.setPhone(listItem.get(i).getOrderModel().getAccountModel().getPhone());
-
-            //OrderModel
-            Order orderModel = new Order();
-            orderModel.setId(listItem.get(i).getOrderModel().getId());
-            orderModel.setCreated_at(listItem.get(i).getOrderModel().getCreated_at());
-            orderModel.setReceive_at(listItem.get(i).getOrderModel().getReceive_at());
-            orderModel.setStoreModel(storeModel);
-            orderModel.setAccountModel(accountModel);
-
-            //OrderItemModel
-            orderItemModel.setId(listItem.get(i).getId());
-            orderItemModel.setQuantity(listItem.get(i).getQuantity());
-            orderItemModel.setPrice(listItem.get(i).getPrice());
-            orderItemModel.setOrderModel(orderModel);
-            orderItemModel.setProductModel(productModel);
-            listItemResult.add(i,orderItemModel);
+    @Transactional
+    public boolean updateQuantity(OrderItem orderItemModel) {
+        Optional<OrderItem> itemOrder = this.orderItemRepository.findById(orderItemModel.getId());
+        if (itemOrder.isPresent()) {
+            OrderItem updateItem = itemOrder.get();
+            if (orderItemModel.getQuantity() == 0) {
+                this.orderItemRepository.deleteById(updateItem.getId());
+            } else {
+                updateItem.setQuantity(orderItemModel.getQuantity());
+                this.orderItemRepository.save(updateItem);
+            }
+            return true;
         }
-
-        return listItemResult;
+        return false;
     }
 
-    @Override
-    public int[] getQuantityOrder(int idStore) {
-
-            int[] quantityOrder = new int[4];
-            quantityOrder[0] = this.orderItemRepository.listOderItemOfStore(idStore,1).size();
-            quantityOrder[1] = this.orderItemRepository.listOderItemOfStore(idStore,2).size();
-            quantityOrder[2] = this.orderItemRepository.listOderItemOfStore(idStore,3).size();
-            quantityOrder[3] = this.orderItemRepository.listOderItemOfStore(idStore,4).size();
-            return quantityOrder;
-
+    private List<OrderItemDTO> convertToDTO(List<OrderItem> listItem){
+      return listItem.stream().map(orderItem -> new OrderItemDTO(orderItem)).collect(Collectors.toList());
     }
 
     public double price( List<OrderItem> orderItemModel){
@@ -164,6 +116,18 @@ public class OrderItemServiceImpl implements com.app.api.service.interfaces.IOrd
             }
         }
         return value;
+    }
+
+    @Override
+    public int[] getQuantityOrder(int idStore) {
+
+        int[] quantityOrder = new int[4];
+        quantityOrder[0] = this.orderItemRepository.listOderItemOfStore(idStore,1).size();
+        quantityOrder[1] = this.orderItemRepository.listOderItemOfStore(idStore,2).size();
+        quantityOrder[2] = this.orderItemRepository.listOderItemOfStore(idStore,3).size();
+        quantityOrder[3] = this.orderItemRepository.listOderItemOfStore(idStore,4).size();
+        return quantityOrder;
+
     }
 
     @Override
@@ -199,21 +163,6 @@ public class OrderItemServiceImpl implements com.app.api.service.interfaces.IOrd
         return priceOfYear;
     }
 
-    @Override
-    @Transactional
-    public boolean updateQuantityForOrderItem(OrderItem orderItemModel) {
-        Optional<OrderItem> itemOrder = this.orderItemRepository.findById(orderItemModel.getId());
-        if (itemOrder.isPresent()) {
-            OrderItem updateItem = itemOrder.get();
-            if (orderItemModel.getQuantity() == 0) {
-                this.orderItemRepository.deleteById(updateItem.getId());
-            } else {
-                updateItem.setQuantity(orderItemModel.getQuantity());
-                this.orderItemRepository.save(updateItem);
-            }
-            return true;
-        }
-        return false;
-    }
+
 
 }

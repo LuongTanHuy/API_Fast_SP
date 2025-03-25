@@ -1,112 +1,117 @@
 package com.app.api.service.implement;
 
+import com.app.api.dto.ListStoreDTO;
+import com.app.api.dto.StoreDTO;
 import com.app.api.model.Category;
+import com.app.api.model.OrderItem;
 import com.app.api.model.Store;
 import com.app.api.repository.ICategoryRepository;
 import com.app.api.repository.IOrderItemRepository;
 import com.app.api.repository.IStoreRepository;
 import com.app.api.service.interfaces.IStoreService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class StoreServiceImpl implements IStoreService {
-    @Autowired
-    private IStoreRepository storeRepository;
-    @Autowired
-    private ICategoryRepository categoryRepository;
-    @Autowired
-    private IOrderItemRepository orderItemRepository;
+    private final IStoreRepository storeRepository;
+    private final ICategoryRepository categoryRepository;
+    private final IOrderItemRepository orderItemRepository;
+
+    private final TokenServiceImpl tokenService;
+    private final FileStorageServiceImpl fileStorageService;
     private static final int FINISH = 3;
 
     private List<String> convertListCategory(List<Category> listCategory) {
-        List<String> result = new ArrayList<>();
+        return listCategory.stream().map(Category::getCategory).collect(Collectors.toList());
+    }
 
-        for (int i = 0; i < listCategory.size(); i++) {
-            result.add(listCategory.get(i).getCategory());
+    private Integer totalOrdersSold(Integer idStore) {
+        return this.orderItemRepository.listOderItemOfStore(idStore, FINISH).size();
+    }
+
+    private Double revenue(Integer idStore) {
+        List<OrderItem> orderItems = this.orderItemRepository.listOderItemOfStore(idStore, FINISH);
+        return orderItems.stream().mapToDouble(OrderItem::getPrice).sum();
+    }
+
+    private List<ListStoreDTO> convertListStoreDTO(List<Store> listStore){
+        Map<Integer, Integer> totalOrdersMap = listStore.stream()
+                .collect(Collectors.toMap(Store::getId, store -> totalOrdersSold(store.getId())));
+
+        Map<Integer, Double> revenueMap = listStore.stream()
+                .collect(Collectors.toMap(Store::getId, store -> revenue(store.getId())));
+
+        return listStore.stream()
+                .map(store -> new ListStoreDTO(
+                        store,
+                        totalOrdersMap.get(store.getId()),
+                        revenueMap.get(store.getId()),
+                        convertListCategory(this.categoryRepository.getAllByIdStore(store.getId()))
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ListStoreDTO> listStore(String token, Integer page, Integer size) {
+        Integer id = this.tokenService.validateTokenAndGetId(token);
+
+        if (id == null) {
+            return Collections.emptyList();
         }
-        return result;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC);
+        List<Store> listStore = this.storeRepository.findAll(pageable).getContent();
+
+        return  this.convertListStoreDTO(listStore);
+
     }
 
-    private int totalOrdersSold(int idStore) {
-        return this.orderItemRepository.listOderItemOfStore(idStore,FINISH).size();
-    }
 
-    private double revenue(int idStore) {
-        DecimalFormat decimalFormat = new DecimalFormat("#,000");
-        double result = 0;
-        for(int i=0 ;i< this.orderItemRepository.listOderItemOfStore(idStore,FINISH).size();i++){
-            result += this.orderItemRepository.listOderItemOfStore(idStore,FINISH).get(i).getPrice();
+    @Override
+    public List<ListStoreDTO> search(String token, String search) {
+        Integer id = this.tokenService.validateTokenAndGetId(token);
+
+        if (id == null) {
+            return Collections.emptyList();
         }
-        return Double.parseDouble(decimalFormat.format(result));
+
+        return this.convertListStoreDTO(this.storeRepository.findByKeyword(search));
     }
 
     @Override
-    public List<Store> listStore(Pageable pageable) {
-        Page<Store> listStore = this.storeRepository.findAll(pageable);
-        List<Store> containerListStore = listStore.toList();
-        List<Store> resultListStore = new ArrayList<>();
+    public StoreDTO updateInfo(String token, MultipartFile file, String name, String address, String email, String phone)
+    {
+        Integer idStore = this.tokenService.validateTokenAndGetId(token);
 
-        for(int i=0;i< containerListStore.size();i++){
-            int idStore = containerListStore.get(i).getId();
-            List<Category> listCategory = this.categoryRepository.getAllByIdStore(idStore);
-
-            Store object = containerListStore.get(i);
-            object.setListCategory(this.convertListCategory(listCategory));
-            object.setTotalOrdersSold(this.totalOrdersSold(idStore));
-            object.setRevenue(this.revenue(idStore));
-
-            resultListStore.add(object);
-
-        }
-        return resultListStore;
-    }
-
-    @Override
-    public List<Store> getAllRequestOpenStore() {
-        return this.storeRepository.getAllRequestOpenStore();
-    }
-
-    @Override
-    public int totalStore(){
-        return this.storeRepository.findAll().size();
-    }
-
-    @Override
-    public List<Store> search(String search) {
-        return this.storeRepository.findByKeyword(search);
-    }
-
-    @Override
-    public boolean updateInfo(Store storeModel) {
-        Optional<Store> getStoreModel = this.storeRepository.findById(storeModel.getId());
+        Optional<Store> getStoreModel = this.storeRepository.findById(idStore);
         if (getStoreModel.isPresent()) {
             Store updateStoreModel = getStoreModel.get();
-            updateStoreModel.setName(storeModel.getName());
-            updateStoreModel.setAddress(storeModel.getAddress());
-            updateStoreModel.setEmail(storeModel.getEmail());
-            updateStoreModel.setPhone(storeModel.getPhone());
+            updateStoreModel.setName(name);
+            updateStoreModel.setAddress(address);
+            updateStoreModel.setEmail(email);
+            updateStoreModel.setPhone(phone);
 
-            if (storeModel.getImage() != null && !storeModel.getImage().isEmpty()) {
-                updateStoreModel.setImage(storeModel.getImage());
+            if(!file.isEmpty()){
+                updateStoreModel.setImage(this.fileStorageService.storeFile(file));
             }
 
-            this.storeRepository.save(updateStoreModel);
-            return true;
+            ;
+            return this.storeRepository.save(updateStoreModel).getId() >0 ? new StoreDTO(updateStoreModel): null;
         }
-        return false;
-    }
-
-    @Override
-    public int addStore(Store storeModel) {
-        return this.storeRepository.save(storeModel).getId();
+        return null;
     }
 
 }
+

@@ -1,162 +1,176 @@
 package com.app.api.service.implement;
 
+import com.app.api.dto.ProductDTO;
 import com.app.api.model.Category;
 import com.app.api.model.Product;
 import com.app.api.model.Store;
-import com.app.api.repository.ICategoryRepository;
 import com.app.api.repository.IOrderItemRepository;
 import com.app.api.repository.IProductRepository;
 import com.app.api.service.interfaces.IProductService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ProductServiceImpl implements IProductService {
 
     private final IProductRepository productRepository;
-    private final ICategoryRepository categoryRepository;
     private final IOrderItemRepository orderItemRepository;
+    private final TokenServiceImpl tokenService;
+    private final FileStorageServiceImpl fileStorageService;
     public static final int SHOW_PRODUCT = 1;
     public static final int HIDDEN_PRODUCT = 0;
 
-    @Autowired
-    public ProductServiceImpl(IProductRepository productRepository, ICategoryRepository categoryRepository, IOrderItemRepository orderItemRepository) {
-        this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
-        this.orderItemRepository = orderItemRepository;
-    }
+    private List<ProductDTO> convertToDTO(List<Product> productList, String type) {
+        if (productList.isEmpty()) return Collections.emptyList();
 
-    private List<Product> listInformationProducts(List<Product> list_product){
-        List<Product> resultProduct = new ArrayList<>();
-
-        for(int i =0 ;i< list_product.size();i++) {
-            Product productModel = new Product();
-
-            // Store
-            Store storeModel = new Store();
-            storeModel.setId(list_product.get(i).getCategoryModel().getStoreModel().getId());
-            storeModel.setImage(list_product.get(i).getCategoryModel().getStoreModel().getImage());
-            storeModel.setName(list_product.get(i).getCategoryModel().getStoreModel().getName());
-            storeModel.setAddress(list_product.get(i).getCategoryModel().getStoreModel().getAddress());
-            storeModel.setEmail(list_product.get(i).getCategoryModel().getStoreModel().getEmail());
-            storeModel.setPhone(list_product.get(i).getCategoryModel().getStoreModel().getPhone());
-
-            // Category
-            Category categoryModel = new Category();
-            categoryModel.setId(list_product.get(i).getCategoryModel().getId());
-            categoryModel.setCategory(list_product.get(i).getCategoryModel().getCategory());
-            categoryModel.setSale(list_product.get(i).getCategoryModel().getSale());
-            categoryModel.setStoreModel(storeModel);
-            categoryModel.setStatus(list_product.get(i).getCategoryModel().getStatus());
-
-            //Product
-            productModel.setId(list_product.get(i).getId());
-            productModel.setImage(list_product.get(i).getImage());
-            productModel.setPrice(list_product.get(i).getPrice());
-            productModel.setName(list_product.get(i).getName());
-            productModel.setStatus(list_product.get(i).getStatus());
-
-            Integer totalProductSold = this.orderItemRepository.totalProductSold(list_product.get(i).getId()) ;
-            productModel.setTotalProductSold(totalProductSold == null ? 0: totalProductSold );
-
-            Double totalRevenue = this.orderItemRepository.totalRevenue(list_product.get(i).getId()) ;
-            productModel.setTotalRevenue(totalRevenue == null ? 0 : totalRevenue);
-
-            productModel.setCategoryModel(categoryModel);
-
-            resultProduct.add(i,productModel);
+        if ("mobileApp".equals(type)) {
+            return productList.stream().map(ProductDTO::new).collect(Collectors.toList());
         }
 
-        return resultProduct;
+        List<Integer> productIds = productList.stream().map(Product::getId).collect(Collectors.toList());
+
+        Map<Integer, Integer> totalProductSoldMap = orderItemRepository.totalProductSold(productIds)
+                .stream()
+                .collect(Collectors.toMap(row -> (Integer) row[0], row -> row[1] != null ? ((Number) row[1]).intValue() : 0));
+
+        Map<Integer, Double> totalRevenueMap = orderItemRepository.totalRevenue(productIds)
+                .stream()
+                .collect(Collectors.toMap(row -> (Integer) row[0], row -> row[1] != null ? ((Number) row[1]).doubleValue() : 0.0));
+
+        return productList.stream().map(product -> {
+            ProductDTO productDTO = new ProductDTO(product);
+
+            productDTO.setTotalProductSold(totalProductSoldMap.getOrDefault(product.getId(), 0));
+            productDTO.setTotalRevenue(totalRevenueMap.getOrDefault(product.getId(), 0.0));
+
+            return productDTO;
+        }).collect(Collectors.toList());
+    }
+
+    //Mobile App
+
+    public List<ProductDTO> productOfTheSameType(String type,Integer idCategory,Integer page, Integer size){
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            List<Product> listProduct = this.productRepository.findByCategoryModelIdOrderByCategoryModelCategoryDesc(idCategory,pageable);
+            return this.convertToDTO(listProduct,type);
+        } catch (Exception e) {
+            System.out.println("ProductServiceImpl - Error get productOfTheSameType: {}"+ e.getMessage());
+            return Collections.emptyList();
+        }
+    };
+
+    public List<ProductDTO> storeProduct(String type,String authorizationHeader,Integer page, Integer size){
+        try {
+            Integer idStore = type.equals("mobileApp")? Integer.valueOf(authorizationHeader):this.tokenService.validateTokenAndGetId(authorizationHeader);
+
+            Pageable pageable = PageRequest.of(page, size);
+            List<Product> listProduct = this.productRepository.findByCategoryModelStoreModelIdOrderByCategoryModelCategoryDesc(idStore,pageable).getContent();
+            return this.convertToDTO(listProduct,type);
+        } catch (Exception e) {
+            System.out.println("ProductServiceImpl - Error get productOfShop: {}"+ e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     @Override
-    public List<Product> listProducts() {
-        List<Product> listProduct = this.productRepository.getProductSale();
-        return this.listInformationProducts(listProduct);
+    @Cacheable(value = "products", key = "#type + '_' + #page + '_' + #size")
+    public List<ProductDTO> productList(String type, Integer page, Integer size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            List<Product> productList = productRepository.findAll(pageable).getContent();
+            return convertToDTO(productList, type);
+        } catch (Exception e) {
+            System.out.println("ProductServiceImpl - Error get list product: {}"+ e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    //Web Admin
+
+    @Override
+    public List<ProductDTO> filterProduct(String authorizationHeader, Integer idCategory, Integer page, Integer size) {
+        try {
+            Integer idStore = this.tokenService.validateTokenAndGetId(authorizationHeader);
+
+            Pageable pageable = PageRequest.of(page, size);
+
+            List<Product> listProduct = this.productRepository.findByCategoryModelStoreModelIdAndCategoryModelIdOrderByCategoryModelCategoryDesc(idStore,idCategory,pageable);
+            return this.convertToDTO(listProduct,"");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    };
+
+    @Override
+    public List<ProductDTO> searchProductInStore(String authorizationHeader, String search) {
+        try {
+            Integer idStore = this.tokenService.validateTokenAndGetId(authorizationHeader);
+
+            List<Product> listProduct = this.productRepository.findByNameContainingAndCategoryModelStoreModelIdOrderByCategoryModelCategoryDesc(search,idStore);
+            return this.convertToDTO(listProduct,"");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public Product getProductDetail(int id) {
-        Product productModel = new Product();
+    public boolean add(String authorizationHeader, int idCategory, String name, double price, MultipartFile file) {
+
+        // Store
         Store storeModel = new Store();
-        storeModel.setId(this.productRepository.findById(id).get().getCategoryModel().getStoreModel().getId());
-        storeModel.setName(this.productRepository.findById(id).get().getCategoryModel().getStoreModel().getName());
-        storeModel.setPhone(this.productRepository.findById(id).get().getCategoryModel().getStoreModel().getPhone());
+        storeModel.setId(Integer.valueOf(this.tokenService.validateTokenAndGetId(authorizationHeader)));
 
+        // category
         Category categoryModel = new Category();
-        categoryModel.setId(this.productRepository.findById(id).get().getCategoryModel().getId());
-        categoryModel.setCategory(this.productRepository.findById(id).get().getCategoryModel().getCategory());
-        categoryModel.setSale(this.productRepository.findById(id).get().getCategoryModel().getSale());
+        categoryModel.setId(idCategory);
         categoryModel.setStoreModel(storeModel);
-        categoryModel.setStatus(this.productRepository.findById(id).get().getCategoryModel().getStatus());
 
-
-        productModel.setId(this.productRepository.findById(id).get().getId());
-        productModel.setImage(this.productRepository.findById(id).get().getImage());
-        productModel.setPrice(this.productRepository.findById(id).get().getPrice());
-        productModel.setName(this.productRepository.findById(id).get().getName());
-        productModel.setStatus(this.productRepository.findById(id).get().getStatus());
+        // product
+        Product productModel = new Product();
+        productModel.setName(name);
+        productModel.setPrice(price);
         productModel.setCategoryModel(categoryModel);
-        return productModel;
-    }
+        productModel.setStatus(0);
 
-    public List<Product> productOfTheSameType(int idCategory){
-        List<Product> listProduct = this.productRepository.productOfTheSaneType(idCategory);
-        return this.listInformationProducts(listProduct);
-    };
+        // image
+        productModel.setImage(this.fileStorageService.storeFile(file));
 
-    public List<Product> productOfShop(int idStore){
-        List<Product> listProduct = this.productRepository.productOfShop(idStore);
-       return this.listInformationProducts(listProduct);
-    }
-
-    @Override
-    public List<Product> searchProductOfTheSameType(int idStore, int idCategory){
-        List<Product> listProduct = this.productRepository.searchProductOfTheSameType(idStore,idCategory);
-       return this.listInformationProducts(listProduct);
-    };
-
-    @Override
-    public List<Product> searchProductOfShop(int idStore, String search) {
-        List<Product> listProduct = this.productRepository.searchProductOfShop(idStore,search);
-       return this.listInformationProducts(listProduct);
-    }
-
-    @Override
-    public boolean addProduct(Product productModel) {
         return this.productRepository.save(productModel).getId() > 0;
     }
 
     @Override
-    public List<Category> categoryOfShop(int id_store) {
-        List<Category> listCategoryModel = this.categoryRepository.getAllByIdStore(id_store);
-        List<Category> resultCategoryModel = new ArrayList<>();
-        for(Category object:listCategoryModel){
-            Store newStoreModel = new Store();
-            newStoreModel.setId(object.getStoreModel().getId());
-            object.setStoreModel(newStoreModel);
-            object.setProducts(null);
-            resultCategoryModel.add(object);
-        }
-        return resultCategoryModel;
-    }
+    public boolean update(String authorizationHeader, Integer idCategory, String name, double price, MultipartFile file) {
 
-    @Override
-    public boolean updateProduct(Product productModel) {
-        Optional<Product> getProductModel = this.productRepository.findById(productModel.getId());
+        Integer idProduct = this.tokenService.validateTokenAndGetId(authorizationHeader);
+
+        Optional<Product> getProductModel = this.productRepository.findById(idProduct);
+
+        Category categoryModel = new Category();
+        categoryModel.setId(idCategory);
+
         if (getProductModel.isPresent()) {
             Product updateProductModel = getProductModel.get();
-            updateProductModel.setName(productModel.getName());
-            if (productModel.getImage() != null) {
-                updateProductModel.setImage(productModel.getImage());
+            updateProductModel.setName(name);
+            if (!file.isEmpty()) {
+                String fileName = this.fileStorageService.storeFile(file);
+                if (fileName != null) {
+                    updateProductModel.setImage(fileName);
+                }
             }
-            updateProductModel.setPrice(productModel.getPrice());
-            updateProductModel.setCategoryModel(productModel.getCategoryModel());
+            updateProductModel.setPrice(price);
+            updateProductModel.setCategoryModel(categoryModel);
 
             return this.productRepository.save(updateProductModel).getId() > 0;
         }
@@ -165,7 +179,7 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public boolean changeStatusProduct(int idProduct) {
+    public boolean changeStatus(int idProduct) {
         Optional<Product> getProductModel = this.productRepository.findById(idProduct);
 
         if (getProductModel.isPresent()) {

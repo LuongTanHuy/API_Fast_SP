@@ -15,7 +15,7 @@ public class Comment {
     @Column(name="comment")
     private String comment;
 
-    @Column(name="created_at")
+    @Column(name="createdAt")
     @JsonFormat(pattern = "dd-MM-yyyy")
     private Timestamp created_at;
 
@@ -38,11 +38,11 @@ public class Comment {
         created_at = new Timestamp(System.currentTimeMillis());
     }
     @ManyToOne
-    @JoinColumn(name="id_account",nullable = false)
+    @JoinColumn(name="idAccount",nullable = false)
     private Account accountModel;
 
     @ManyToOne
-    @JoinColumn(name="id_product",nullable = false)
+    @JoinColumn(name="idProduct",nullable = false)
     private Product productModel;
 
     public Comment() {
