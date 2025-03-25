@@ -31,9 +31,9 @@ public class SecurityConfig implements WebSocketMessageBrokerConfigurer {
         http.authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers(HttpMethod.GET, "/**").permitAll() // Cho phép tất cả các yêu cầu GET
-                                .requestMatchers(HttpMethod.POST, "/api/v1/**","/FastFood/**").permitAll() // Cho phép POST đến API
-                                .requestMatchers(HttpMethod.PUT, "/api/v1/**","/FastFood/**").permitAll() // Cho phép PUT đến API
-                                .requestMatchers(HttpMethod.DELETE, "/api/v1/**","/FastFood/**").permitAll() // Cho phép DELETE đến API
+                                .requestMatchers(HttpMethod.POST, "/api/v2/**").permitAll() // Cho phép POST đến API
+                                .requestMatchers(HttpMethod.PUT, "/api/v2/**").permitAll() // Cho phép PUT đến API
+                                .requestMatchers(HttpMethod.DELETE, "/api/v2/**").permitAll() // Cho phép DELETE đến API
                                 .anyRequest().permitAll()
                 )
                 .logout(logout -> logout.permitAll())
