@@ -149,33 +149,63 @@ public class ProductServiceImpl implements IProductService {
         return this.productRepository.save(productModel).getId() > 0;
     }
 
-    @Override
-    public boolean update(String authorizationHeader,Integer idProduct, Integer idCategory, String name, double price, MultipartFile file) {
+//    @Override
+//    public boolean update(String authorizationHeader,Integer idProduct, Integer idCategory, String name, double price, MultipartFile file) {
+//
+//        Integer idStore = this.tokenService.validateTokenAndGetId(authorizationHeader);
+//
+//        Optional<Product> getProductModel = this.productRepository.findById(idProduct);
+//
+//        Category categoryModel = new Category();
+//        categoryModel.setId(idCategory);
+//
+//        if (getProductModel.isPresent() && getProductModel.get().getCategoryModel().getStoreModel().getId() == idStore) {
+//            Product updateProductModel = getProductModel.get();
+//            updateProductModel.setName(name);
+//            if (!file.isEmpty()) {
+//                String fileName = this.fileStorageService.storeFile(file);
+//                if (fileName != null) {
+//                    updateProductModel.setImage(fileName);
+//                }
+//            }
+//            updateProductModel.setPrice(price);
+//            updateProductModel.setCategoryModel(categoryModel);
+//
+//            return this.productRepository.save(updateProductModel).getId() > 0;
+//        }
+//
+//        return false;
+//    }
+@Override
+public boolean update(String authorizationHeader, Integer idProduct, Integer idCategory, String name, double price, MultipartFile file) {
+    Integer idStore = this.tokenService.validateTokenAndGetId(authorizationHeader);
 
-        Integer idStore = this.tokenService.validateTokenAndGetId(authorizationHeader);
+    Optional<Product> getProductModel = this.productRepository.findById(idProduct);
 
-        Optional<Product> getProductModel = this.productRepository.findById(idProduct);
+    Category categoryModel = new Category();
+    categoryModel.setId(idCategory);
 
-        Category categoryModel = new Category();
-        categoryModel.setId(idCategory);
+    if (getProductModel.isPresent() && getProductModel.get().getCategoryModel().getStoreModel().getId() == idStore) {
+        Product updateProductModel = getProductModel.get();
+        updateProductModel.setName(name);
 
-        if (getProductModel.isPresent() && getProductModel.get().getCategoryModel().getStoreModel().getId() == idStore) {
-            Product updateProductModel = getProductModel.get();
-            updateProductModel.setName(name);
-            if (!file.isEmpty()) {
-                String fileName = this.fileStorageService.storeFile(file);
-                if (fileName != null) {
-                    updateProductModel.setImage(fileName);
-                }
+        // Kiểm tra null trước khi dùng file
+        if (file != null && !file.isEmpty()) {
+            String fileName = this.fileStorageService.storeFile(file);
+            if (fileName != null) {
+                updateProductModel.setImage(fileName);
             }
-            updateProductModel.setPrice(price);
-            updateProductModel.setCategoryModel(categoryModel);
-
-            return this.productRepository.save(updateProductModel).getId() > 0;
         }
 
-        return false;
+        updateProductModel.setPrice(price);
+        updateProductModel.setCategoryModel(categoryModel);
+
+        return this.productRepository.save(updateProductModel).getId() > 0;
     }
+
+    return false;
+}
+
 
     @Override
     public boolean changeStatus(int idProduct) {

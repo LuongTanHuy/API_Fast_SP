@@ -1,6 +1,7 @@
 package com.app.api.controller.mvc;
 
 import com.app.api.dto.CategoryDTO;
+import com.app.api.service.implement.TokenServiceImpl;
 import com.app.api.service.interfaces.ICategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,21 @@ public class CategoryWebController {
 
     @Autowired
     private ICategoryService categoryInterface;
+
+
+    @Autowired
+    private TokenServiceImpl tokenService;
+
+    @GetMapping("category")
+    public ResponseEntity<List<CategoryDTO>> getListCategory(@RequestHeader("Authorization") String token) {
+        Integer idStore = tokenService.validateTokenAndGetId(token);
+
+        if (idStore == null || idStore == 0) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(categoryInterface.listCategory(idStore));
+    }
 
     @PostMapping("category/add")
     public ResponseEntity<List<CategoryDTO>> add(@RequestHeader("Authorization") String idStore,

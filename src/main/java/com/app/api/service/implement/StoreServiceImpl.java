@@ -46,6 +46,22 @@ public class StoreServiceImpl implements IStoreService {
         return orderItems.stream().mapToDouble(OrderItem::getPrice).sum();
     }
 
+//    private List<ListStoreDTO> convertListStoreDTO(List<Store> listStore){
+//        Map<Integer, Integer> totalOrdersMap = listStore.stream()
+//                .collect(Collectors.toMap(Store::getId, store -> totalOrdersSold(store.getId())));
+//
+//        Map<Integer, Double> revenueMap = listStore.stream()
+//                .collect(Collectors.toMap(Store::getId, store -> revenue(store.getId())));
+//
+//        return listStore.stream()
+//                .map(store -> new ListStoreDTO(
+//                        store,
+//                        totalOrdersMap.get(store.getId()),
+//                        revenueMap.get(store.getId()),
+//                        convertListCategory(this.categoryRepository.getAllByIdStore(store.getId()))
+//                ))
+//                .collect(Collectors.toList());
+//    }
     private List<ListStoreDTO> convertListStoreDTO(List<Store> listStore){
         Map<Integer, Integer> totalOrdersMap = listStore.stream()
                 .collect(Collectors.toMap(Store::getId, store -> totalOrdersSold(store.getId())));
@@ -54,14 +70,18 @@ public class StoreServiceImpl implements IStoreService {
                 .collect(Collectors.toMap(Store::getId, store -> revenue(store.getId())));
 
         return listStore.stream()
-                .map(store -> new ListStoreDTO(
-                        store,
-                        totalOrdersMap.get(store.getId()),
-                        revenueMap.get(store.getId()),
-                        convertListCategory(this.categoryRepository.getAllByIdStore(store.getId()))
-                ))
+                .map(store -> {
+                    List<Category> categories = this.categoryRepository.getAllByIdStore(store.getId());
+                    return new ListStoreDTO(
+                            store,
+                            totalOrdersMap.get(store.getId()),
+                            revenueMap.get(store.getId()),
+                            convertListCategory(categories)
+                    );
+                })
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public List<ListStoreDTO> listStore(String token, Integer page, Integer size) {
@@ -71,7 +91,8 @@ public class StoreServiceImpl implements IStoreService {
             return Collections.emptyList();
         }
 
-        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+
         List<Store> listStore = this.storeRepository.findAll(pageable).getContent();
 
         return  this.convertListStoreDTO(listStore);

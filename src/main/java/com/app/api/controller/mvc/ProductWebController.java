@@ -51,19 +51,32 @@ public class ProductWebController {
                 ResponseEntity.status(200).body(null) : ResponseEntity.status(404).body(null);
     }
 
+//    @PostMapping("product/update")
+//    public ResponseEntity<?> update(@RequestHeader("Authorization") String authorizationHeader,
+//                                           @RequestParam("idProduct") int idProduct,
+//                                           @RequestParam("idCategory") int idCategory,
+//                                           @RequestParam("name") String name,
+//                                           @RequestParam("price") double price,
+//                                           @RequestParam("file") MultipartFile file) {
+//
+//        return this.productInterface.update(authorizationHeader,idProduct,idCategory,name,price,file) == true ?
+//                ResponseEntity.status(200).body(null) : ResponseEntity.status(404).body(null);
+//    }
+
     @PostMapping("product/update")
     public ResponseEntity<?> update(@RequestHeader("Authorization") String authorizationHeader,
-                                           @RequestParam("idProduct") int idProduct,
-                                           @RequestParam("idCategory") int idCategory,
-                                           @RequestParam("name") String name,
-                                           @RequestParam("price") double price,
-                                           @RequestParam("file") MultipartFile file) {
-
-        return this.productInterface.update(authorizationHeader,idProduct,idCategory,name,price,file) == true ?
-                ResponseEntity.status(200).body(null) : ResponseEntity.status(404).body(null);
+                                    @RequestParam("idProduct") int idProduct,
+                                    @RequestParam("idCategory") int idCategory,
+                                    @RequestParam("name") String name,
+                                    @RequestParam("price") double price,
+                                    @RequestParam(value = "file", required = false) MultipartFile file) {
+        return this.productInterface.update(authorizationHeader, idProduct, idCategory, name, price, file)
+                ? ResponseEntity.status(200).body(null)
+                : ResponseEntity.status(404).body(null);
     }
 
-    @GetMapping("product/change-status/{id}")
+
+    @GetMapping("product/change-status/{idProduct}")
     public ResponseEntity<?> changeStatus(@PathVariable("idProduct") int idProduct) {
       return this.productInterface.changeStatus(idProduct) == true ?
                 ResponseEntity.status(200).body(null) : ResponseEntity.status(404).body(null);

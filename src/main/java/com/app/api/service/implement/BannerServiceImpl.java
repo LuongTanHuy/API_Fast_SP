@@ -36,24 +36,55 @@ public class BannerServiceImpl implements IBannerService
         return null;
     }
 
+//    @Override
+//    public List<Banner> update(String token, MultipartFile file, String text,Integer id) {
+//
+//        if(this.tokenService.validateTokenAndGetId(token).equals(null)){return null;}
+//
+//        String fileName = null;
+//        file.isEmpty() bị gọi khi file == null - da fix o ham ben duoi
+//        if(!file.isEmpty()){fileName = this.fileStorageService.storeFile(file);}
+//
+//        Optional<Banner> optionalBannerModel = this.bannerRepository.findById(id);
+//        if (optionalBannerModel.isPresent()) {
+//            Banner update= optionalBannerModel.get();
+//            if (fileName != null ) {update.setImage(fileName);}
+//            if (text != null ) {update.setText(text);}
+//            if(this.bannerRepository.save(update).getId() > 0){return this.listBanner();};
+//        }
+//
+//        return null;
+//    }
+// Đã fix lại
     @Override
-    public List<Banner> update(String token, MultipartFile file, String text,Integer id) {
-
-        if(this.tokenService.validateTokenAndGetId(token).equals(null)){return null;}
+    public List<Banner> update(String token, MultipartFile file, String text, Integer id) {
+        if (this.tokenService.validateTokenAndGetId(token) == null) {
+            return null;
+        }
 
         String fileName = null;
-        if(!file.isEmpty()){fileName = this.fileStorageService.storeFile(file);}
+
+        // xử lý nếu file khác null
+        if (file != null && !file.isEmpty()) {
+            fileName = this.fileStorageService.storeFile(file);
+        }
 
         Optional<Banner> optionalBannerModel = this.bannerRepository.findById(id);
         if (optionalBannerModel.isPresent()) {
-            Banner update= optionalBannerModel.get();
-            if (fileName != null ) {update.setImage(fileName);}
-            if (text != null ) {update.setText(text);}
-            if(this.bannerRepository.save(update).getId() > 0){return this.listBanner();};
+            Banner update = optionalBannerModel.get();
+            if (fileName != null) {
+                update.setImage(fileName);
+            }
+            if (text != null) {
+                update.setText(text);
+            }
+            if (this.bannerRepository.save(update).getId() > 0) {
+                return this.listBanner();
+            }
         }
-
         return null;
     }
+
 
     @Override
     public List<Banner> delete(String token,Integer id) {

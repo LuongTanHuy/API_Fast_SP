@@ -43,19 +43,34 @@ public class BannerWebController {
         return ResponseEntity.status(200).body(list);
     }
 
+//    @PostMapping("banner/update")
+//    public ResponseEntity<List<Banner>> update(@RequestHeader("Authorization") String token,
+//                                          @RequestParam("file") MultipartFile file,
+//                                          @RequestParam("text") String text,
+//                                          @RequestParam("id") int id){
+//
+//
+//        List<Banner> list = this.bannerInterface.update(token,file,text,id);
+//        if (list.equals(null)) {
+//            return ResponseEntity.status(401).build();
+//        }
+//        return ResponseEntity.status(200).body(list);
+//    }
+
     @PostMapping("banner/update")
-    public ResponseEntity<List<Banner>> update(@RequestHeader("Authorization") String token,
-                                          @RequestParam("file") MultipartFile file,
-                                          @RequestParam("text") String text,
-                                          @RequestParam("id") int id){
-
-
-        List<Banner> list = this.bannerInterface.update(token,file,text,id);
-        if (list.equals(null)) {
+    public ResponseEntity<List<Banner>> update(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam("text") String text,
+            @RequestParam("id") int id) {
+        List<Banner> list = this.bannerInterface.update(token, file, text, id);
+        if (list == null) {
             return ResponseEntity.status(401).build();
         }
         return ResponseEntity.status(200).body(list);
     }
+
+
 
     @GetMapping("banner/delete")
     public ResponseEntity<List<Banner>> delete(@RequestHeader("Authorization") String token,@RequestParam("id") int id){

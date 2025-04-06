@@ -46,7 +46,7 @@ public class SecurityConfig implements WebSocketMessageBrokerConfigurer {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Arrays.asList("http://localhost:8081", "http://192.168.100.122:8080","http://localhost:8080")); // Thay bằng domain của bạn
+        config.setAllowedOrigins(Arrays.asList("http://localhost:8081","http://localhost:3000", "http://192.168.100.122:8080","http://localhost:8080")); // Thay bằng domain của bạn
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         source.registerCorsConfiguration("/**", config);

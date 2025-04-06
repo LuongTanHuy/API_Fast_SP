@@ -44,7 +44,9 @@ public class AccountDTO {
         this.role = account.getRole();
         this.permission = account.getPermission();
         this.created_at = account.getCreated_at();
-        this.storeDTO = new StoreDTO(account.getStoreModel());
+        if(account.getStoreModel() != null){
+            this.storeDTO = new StoreDTO(account.getStoreModel());
+        }
     }
 
     public AccountDTO(String username, String email, String phone, String address) {

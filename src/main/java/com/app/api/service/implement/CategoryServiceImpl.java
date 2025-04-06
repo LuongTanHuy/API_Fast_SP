@@ -22,7 +22,8 @@ public class CategoryServiceImpl implements ICategoryService {
     private static final Integer SHOW = 0;
     private static final Integer HIDDEN = 1;
     @Override
-    @Cacheable(value = "categories", key = "#idStore")
+//    @Cacheable(value = "categories", key = "#idStore")
+
     public List<CategoryDTO> listCategory(Integer idStore) {
         try {
             List<Category> listCategory = this.categoryRepository.getAllByIdStore(idStore);

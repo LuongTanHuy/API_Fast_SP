@@ -65,14 +65,18 @@ public class AccountServiceImpl implements IAccountService {
     public AccountDTO accountDetail(String token) {
         try {
             Integer idAccount =this.tokenService.validateTokenAndGetId(token);
+            System.out.print("idAccount" + idAccount);
             if(idAccount.equals(0)){ return null;};
             AccountDTO result = new AccountDTO(this.accountRepository.findById(idAccount).get());
             return result.getPermission() == true ? result : null;
         } catch (Exception e) {
             Integer idSore =this.tokenService.validateTokenAndGetId(token);
+            System.out.print("idSore"+idSore);
             if(idSore.equals(0)){ return null;};
             AccountDTO result = new AccountDTO(this.accountRepository.findByStoreId(idSore));
             return result.getPermission() == true ? result : null;
+//            System.out.print("error"+e);
+
         }
     }
 
