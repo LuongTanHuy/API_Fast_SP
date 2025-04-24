@@ -224,5 +224,23 @@ public boolean update(String authorizationHeader, Integer idProduct, Integer idC
 
         return false;
     }
+    @Override
+    public List<ProductDTO> getAllProducts(String type, String authorizationHeader) {
+        try {
+            Integer idStore = type.equals("mobileApp")
+                    ? Integer.valueOf(authorizationHeader)
+                    : this.tokenService.validateTokenAndGetId(authorizationHeader);
+
+            List<Product> productList = this.productRepository
+                    .findByCategoryModelStoreModelIdOrderByCategoryModelCategoryDesc(idStore);
+
+            return convertToDTO(productList, type);
+        } catch (Exception e) {
+            System.out.println("ProductServiceImpl - Error getAllProducts: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+
 
 }

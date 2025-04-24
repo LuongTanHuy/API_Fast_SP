@@ -1,10 +1,13 @@
 package com.app.api.controller.mvc;
 
+import com.app.api.dto.ProductDTO;
 import com.app.api.service.interfaces.IProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v2/web/")
@@ -21,6 +24,16 @@ public class ProductWebController {
                 ResponseEntity.status(200).body(this.productInterface.storeProduct("",authorizationHeader, page, size)) :
                 ResponseEntity.status(404).body(null);
     }
+
+    @GetMapping("product/all")
+    public ResponseEntity<?> getAllProducts(@RequestHeader("Authorization") String authorizationHeader) {
+        List<ProductDTO> products = this.productInterface.getAllProducts("", authorizationHeader);
+        return products != null && !products.isEmpty()
+                ? ResponseEntity.ok(products)
+                : ResponseEntity.status(404).body("Không tìm thấy sản phẩm nào.");
+    }
+
+
 
     @PostMapping("product/search")
     public ResponseEntity<?> searchProductInStore(@RequestHeader("Authorization") String authorizationHeader, @RequestParam("search") String search) {

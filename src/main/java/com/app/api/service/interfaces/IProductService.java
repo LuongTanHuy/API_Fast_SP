@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface IProductService {
+    public List<ProductDTO> getAllProducts(String type, String authorizationHeader);
     public List<ProductDTO> productList(String type,Integer page, Integer size);
     public List<ProductDTO> storeProduct(String type, String authorizationHeader, Integer page, Integer size);
     public List<ProductDTO> productOfTheSameType(String type,Integer idCategory, Integer page, Integer size);

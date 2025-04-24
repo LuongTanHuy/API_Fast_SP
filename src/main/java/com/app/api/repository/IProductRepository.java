@@ -33,4 +33,7 @@ public interface IProductRepository extends JpaRepository<Product,Integer> {
     // Lấy sản phẩm theo cửa hàng và loại
     List<Product> findByCategoryModelStoreModelIdAndCategoryModelIdOrderByCategoryModelCategoryDesc(int idStore, int idCategory,Pageable pageable);
 
+    // Lấy tất ca sản phẩm
+    List<Product> findByCategoryModelStoreModelIdOrderByCategoryModelCategoryDesc(int idStore);
+
 }
